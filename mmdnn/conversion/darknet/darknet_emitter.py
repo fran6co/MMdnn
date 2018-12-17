@@ -207,19 +207,29 @@ if __name__=='__main__':
         if IR_node.type == "DepthwiseConv":
             raise ValueError()
 
+        conv_values = {}
+
+        conv_values['name'] = IR_node.name
+
         # implement asymmetric paddings by applying symmetric padding then cropping
         pad_h, pad_w = self._get_symmetric_padding(IR_node)
         if pad_h != pad_w:
-            raise ValueError()
-        padding = pad_h
+            conv_values['pad_h'] = pad_h
+            conv_values['pad_w'] = pad_w
+        else:
+            conv_values['padding'] = pad_h
 
         kernel_h = IR_node.get_attr('kernel_shape')[0]
         kernel_w = IR_node.get_attr('kernel_shape')[1]
-        if kernel_h != kernel_w:
-            raise ValueError()
-        size = kernel_h
 
-        num_output = IR_node.get_attr('kernel_shape')[-1]
+        if kernel_h != kernel_w:
+            conv_values['kernel_h'] = kernel_h
+            conv_values['kernel_w'] = kernel_w
+        else:
+            conv_values['size'] = kernel_h
+
+        conv_values['filters'] = IR_node.get_attr('kernel_shape')[-1]
+        conv_values['strides'] = IR_node.get_attr('strides')[1]
 
         outputs = [self.IR_graph.get_node(edge) for edge in IR_node.out_edges]
         activation = 'linear'
@@ -233,15 +243,16 @@ if __name__=='__main__':
             elif output.type == 'PRelu':
                 activation = 'prelu'
 
-        self.add_body(1, "n.append({{'name': '{}', 'type': 'convolutional', 'batch_normalize': 0, 'filters': {}, 'size': {}, 'stride': {}, 'padding': {}, 'activation': '{}', 'activation_param': {}}})".format(
-            IR_node.name,
-            num_output,
-            size,
-            IR_node.get_attr('strides')[1],
-            padding,
-            activation,
-            activation_param
-        ))
+        conv_values['activation'] = activation
+        conv_values['activation_param'] = activation_param
+        
+        conv_values['type'] = 'convolutional'
+        conv_values['batch_normalize'] = 0
+
+        conv_values = {k: v if type(v) != str else f'\'{v}\'' for k, v in conv_values.items()}
+        params = ', '.join(f'\'{key}\': {value}' for key, value in conv_values.items())
+
+        self.add_body(1, "n.append({" + params + "})")
 
         dim = len(IR_node.get_attr('strides')) - 2
         if self.weight_loaded:
