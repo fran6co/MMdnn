@@ -201,6 +201,17 @@ if __name__=='__main__':
 
         return pad_h, pad_w
 
+    def emit_BatchNorm(self, IR_node):
+        self.fork(IR_node)
+
+        self.add_body(1, "n.append({{'name': '{}', 'type': 'batchnorm'}})".format(
+            IR_node.name,
+        ))
+
+        self.layer_id_by_name[IR_node.name] = self.id
+        self.id += 1
+
+
     def emit_Conv(self, IR_node):
         self.fork(IR_node)
 
