@@ -765,6 +765,8 @@ class Keras2Parser(Parser):
         else:
             Keras2Parser._copy_and_reop(source_node, IR_node, 'Relu')
 
+        max_value = float('inf') if max_value is None else max_value
+
         assign_IRnode_values(IR_node, {'max_value' : max_value})
         self.convert_inedge(source_node, IR_node)
 
