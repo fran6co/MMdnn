@@ -217,7 +217,15 @@ if __name__=='__main__':
         self.add_body(1, "n.append({{'name': '{}', 'type': 'batchnorm'}})".format(
             IR_node.name,
         ))
+        
+        if self.weight_loaded:
+            weights = self.weights_dict.pop(IR_node.name)
 
+            self.weights_dict[IR_node.variable_name + '_scales'] = weights['scale']
+            self.weights_dict[IR_node.variable_name + '_rolling_mean'] = weights['mean']
+            self.weights_dict[IR_node.variable_name + '_rolling_var'] = weights['var']
+            self.weights_dict[IR_node.variable_name + '_bias'] = weights['bias']
+        
         self.layer_id_by_name[IR_node.name] = self.id
         self.id += 1
 
@@ -250,7 +258,7 @@ if __name__=='__main__':
             conv_values['size'] = kernel_h
 
         conv_values['filters'] = IR_node.get_attr('kernel_shape')[-1]
-        conv_values['strides'] = IR_node.get_attr('strides')[1]
+        conv_values['stride'] = IR_node.get_attr('strides')[1]
 
         outputs = [self.IR_graph.get_node(edge) for edge in IR_node.out_edges]
         activation = 'linear'
