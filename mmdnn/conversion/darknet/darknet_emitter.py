@@ -93,6 +93,12 @@ def gen_weight(weight_file, weights_output):
 
         weights = __weights_dict[key]
 
+        if 'scale' in weights:
+            weights_data += list(weights['scale'].flat)
+        if 'mean' in weights:
+            weights_data += list(weights['mean'].flat)
+        if 'var' in weights:
+            weights_data += list(weights['var'].flat)
         if 'bias' in weights:
             weights_data += list(weights['bias'].flat)
         if 'weights' in weights:
@@ -219,12 +225,7 @@ if __name__=='__main__':
         ))
         
         if self.weight_loaded:
-            weights = self.weights_dict.pop(IR_node.name)
-
-            self.weights_dict[IR_node.variable_name + '_scales'] = weights['scale']
-            self.weights_dict[IR_node.variable_name + '_rolling_mean'] = weights['mean']
-            self.weights_dict[IR_node.variable_name + '_rolling_var'] = weights['var']
-            self.weights_dict[IR_node.variable_name + '_bias'] = weights['bias']
+            self.weights_dict[IR_node.variable_name] = self.weights_dict.pop(IR_node.name)
         
         self.layer_id_by_name[IR_node.name] = self.id
         self.id += 1
@@ -286,7 +287,14 @@ if __name__=='__main__':
         dim = len(IR_node.get_attr('strides')) - 2
         if self.weight_loaded:
             self.weights_dict[IR_node.name]['weights'] = np.transpose(self.weights_dict[IR_node.name]['weights'], [dim + 1, dim] + list(range(0, dim)))
+            
+            if 'bias' not in self.weights_dict[IR_node.name]:
+                num_filters = conv_values['filters']
+                self.weights_dict[IR_node.name]['bias'] = np.zeros((num_filters, ), dtype=np.float32)
+
             self.weights_dict[IR_node.variable_name] = self.weights_dict.pop(IR_node.name)
+
+
 
         self.layer_id_by_name[IR_node.name] = self.id
         self.id += 1
