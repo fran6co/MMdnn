@@ -220,8 +220,10 @@ if __name__=='__main__':
     def emit_BatchNorm(self, IR_node):
         self.fork(IR_node)
 
-        self.add_body(1, "n.append({{'name': '{}', 'type': 'batchnorm'}})".format(
-            IR_node.name,
+        epsilon = IR_node.get_attr('epsilon')
+
+        self.add_body(1, "n.append({{'name': '{}', 'type': 'batchnorm', 'epsilon': {}}})".format(
+            IR_node.name, epsilon
         ))
         
         if self.weight_loaded:
