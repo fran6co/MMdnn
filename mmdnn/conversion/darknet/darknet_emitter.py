@@ -450,8 +450,10 @@ if __name__=='__main__':
 
     def emit_LeakyRelu(self, IR_node):
         if not self.merge_with_last_layer(IR_node):
-            self.add_body(1, "n.append({{'name': '{}', 'type': 'activation', 'activation': 'leaky'}})".format(
-                IR_node.name
+            activation_param = IR_node.get_attr('alpha')
+
+            self.add_body(1, "n.append({{'name': '{}', 'type': 'activation', 'activation': 'leaky', 'activation_param': {}}})".format(
+                IR_node.name, activation_param
             ))
 
             self.layer_id_by_name[IR_node.name] = self.id
